@@ -16,31 +16,27 @@ const liveTranslatedEl = $('#liveTranslated');
 const historyEl = $('#history');
 const speechSupportBadge = $('#speechSupportBadge');
 
-const DIRECT_MODEL_MAP = {
-  'en-US->zh-TW': 'Xenova/opus-mt-en-zh',
-  'zh-TW->en-US': 'Xenova/opus-mt-zh-en',
-  'ja-JP->en-US': 'Xenova/opus-mt-ja-en',
-  'ja-JP->en-US#alt': 'Xenova/opus-mt-jap-en',
-  'en-US->ja-JP': 'Xenova/opus-mt-en-jap',
-  'ko-KR->en-US': 'Xenova/opus-mt-ko-en',
-  'th-TH->en-US': 'Xenova/opus-mt-th-en'
-};
+const FALLBACK_MULTILINGUAL_MODEL = 'Xenova/m2m100_418M';
 
-const SEQ2SEQ_UINT8 = {
-  dtype: {
-    encoder_model: 'uint8',
-    decoder_model_merged: 'uint8'
-  }
+const DIRECT_MODEL_MAP = {
+  'en-US->zh-TW': FALLBACK_MULTILINGUAL_MODEL,
+  'zh-TW->en-US': FALLBACK_MULTILINGUAL_MODEL,
+  'ja-JP->en-US': FALLBACK_MULTILINGUAL_MODEL,
+  'en-US->ja-JP': FALLBACK_MULTILINGUAL_MODEL,
+  'ko-KR->en-US': FALLBACK_MULTILINGUAL_MODEL,
+  'th-TH->en-US': FALLBACK_MULTILINGUAL_MODEL,
+  'ja-JP->zh-TW': FALLBACK_MULTILINGUAL_MODEL,
+  'ko-KR->zh-TW': FALLBACK_MULTILINGUAL_MODEL,
+  'th-TH->zh-TW': FALLBACK_MULTILINGUAL_MODEL
 };
 
 const MODEL_OPTIONS = {
-  'Xenova/opus-mt-en-zh': SEQ2SEQ_UINT8,
-  'Xenova/opus-mt-zh-en': SEQ2SEQ_UINT8,
-  'Xenova/opus-mt-ja-en': SEQ2SEQ_UINT8,
-  'Xenova/opus-mt-jap-en': SEQ2SEQ_UINT8,
-  'Xenova/opus-mt-en-jap': SEQ2SEQ_UINT8,
-  'Xenova/opus-mt-ko-en': SEQ2SEQ_UINT8,
-  'Xenova/opus-mt-th-en': SEQ2SEQ_UINT8
+  'Xenova/m2m100_418M': {
+    dtype: {
+      encoder_model: 'fp32',
+      decoder_model_merged: 'fp32'
+    }
+  }
 };
 
 const LABELS = {
@@ -49,6 +45,14 @@ const LABELS = {
   'th-TH': 'ไทย',
   'ja-JP': '日本語',
   'ko-KR': '한국어'
+};
+
+const M2M_LANG = {
+  'zh-TW': 'zh',
+  'en-US': 'en',
+  'th-TH': 'th',
+  'ja-JP': 'ja',
+  'ko-KR': 'ko'
 };
 
 const translatorCache = new Map();
@@ -110,9 +114,12 @@ async function loadTranslator(modelId) {
   return t;
 }
 
-async function runModel(modelId, text) {
+async function runModel(modelId, text, src, tgt) {
   const t = await loadTranslator(modelId);
-  const out = await t(text);
+  const options = modelId === FALLBACK_MULTILINGUAL_MODEL
+    ? { src_lang: M2M_LANG[src], tgt_lang: M2M_LANG[tgt] }
+    : {};
+  const out = await t(text, options);
   return Array.isArray(out) ? (out[0]?.translation_text || '') : '';
 }
 
@@ -120,10 +127,10 @@ async function translateText(text, src, tgt) {
   if (!text.trim()) return '';
   const plan = getTranslationPlan(src, tgt);
   if (plan.type === 'identity') return text;
-  if (plan.type === 'direct') return await runModel(plan.models[0], text);
+  if (plan.type === 'direct') return await runModel(plan.models[0], text, src, tgt);
   if (plan.type === 'pivot') {
-    const english = await runModel(plan.models[0], text);
-    return await runModel(plan.models[1], english);
+    const english = await runModel(plan.models[0], text, src, 'en-US');
+    return await runModel(plan.models[1], english, 'en-US', tgt);
   }
   throw new Error('目前這個語言方向尚未有穩定本地模型');
 }
