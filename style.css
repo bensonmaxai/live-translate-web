@@ -1,0 +1,92 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b1020;
+  --card: #151b2f;
+  --text: #eef2ff;
+  --muted: #9fb0d0;
+  --accent: #7aa2ff;
+  --accent2: #72e2c7;
+  --border: rgba(255,255,255,.08);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  background: linear-gradient(180deg, #0a0f1c, #121a30);
+  color: var(--text);
+}
+.app {
+  padding: max(16px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+  max-width: 820px;
+  margin: 0 auto;
+}
+header { margin: 8px 0 16px; }
+h1 { margin: 0 0 6px; font-size: 28px; }
+p { margin: 0; color: var(--muted); }
+.card {
+  background: rgba(21,27,47,.9);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(10px);
+}
+.controls {
+  display: grid;
+  gap: 12px;
+}
+label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+}
+select, button {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #0f1528;
+  color: var(--text);
+  padding: 14px;
+  font-size: 16px;
+}
+.buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+button { font-weight: 700; }
+button:disabled { opacity: .5; }
+#startBtn, #loadModelBtn { background: linear-gradient(135deg, var(--accent), #4b75ff); }
+#stopBtn { background: linear-gradient(135deg, #ff7a90, #ff5178); }
+#clearBtn { background: linear-gradient(135deg, #31405f, #22304c); }
+.status, .hint {
+  font-size: 14px;
+  line-height: 1.45;
+}
+.status { color: var(--accent2); }
+.hint { color: var(--muted); }
+.live {
+  min-height: 72px;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 24px;
+  line-height: 1.5;
+  margin-top: 12px;
+}
+.original { background: rgba(122,162,255,.10); }
+.translated { background: rgba(114,226,199,.10); }
+.history { display: grid; gap: 12px; }
+.item {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(255,255,255,.03);
+}
+.item .meta {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.item .src { font-size: 16px; margin-bottom: 8px; }
+.item .tgt { font-size: 18px; color: var(--accent2); }

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>本地即時翻譯字幕 P0</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>本地即時翻譯字幕 P0</h1>
+      <p>本地辨識 + 本地翻譯實驗版</p>
+    </header>
+
+    <section class="card controls">
+      <label>
+        來源語言
+        <select id="sourceLang"></select>
+      </label>
+      <label>
+        目標語言
+        <select id="targetLang"></select>
+      </label>
+      <label>
+        每段秒數
+        <select id="duration">
+          <option value="2">2 秒</option>
+          <option value="3" selected>3 秒</option>
+          <option value="4">4 秒</option>
+          <option value="5">5 秒</option>
+        </select>
+      </label>
+      <div class="buttons">
+        <button id="loadModelBtn">載入本地翻譯模型</button>
+        <button id="startBtn">開始</button>
+        <button id="stopBtn" disabled>停止</button>
+        <button id="clearBtn">清除</button>
+      </div>
+      <div id="status" class="status">尚未開始</div>
+      <div id="hint" class="hint">第一次載入本地翻譯模型可能較久，且 Safari 可能受記憶體限制。</div>
+    </section>
+
+    <section class="card">
+      <h2>最新字幕</h2>
+      <div id="liveOriginal" class="live original">...</div>
+      <div id="liveTranslated" class="live translated">...</div>
+    </section>
+
+    <section class="card history-card">
+      <h2>紀錄</h2>
+      <div id="history" class="history"></div>
+    </section>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
