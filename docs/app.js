@@ -27,13 +27,13 @@ const DIRECT_MODEL_MAP = {
 };
 
 const MODEL_OPTIONS = {
-  'Xenova/opus-mt-en-zh': { dtype: 'int8' },
-  'Xenova/opus-mt-zh-en': { dtype: 'int8' },
-  'Xenova/opus-mt-ja-en': { dtype: 'int8' },
-  'Xenova/opus-mt-jap-en': { dtype: 'int8' },
-  'Xenova/opus-mt-en-jap': { dtype: 'int8' },
-  'Xenova/opus-mt-ko-en': { dtype: 'int8' },
-  'Xenova/opus-mt-th-en': { dtype: 'int8' }
+  'Xenova/opus-mt-en-zh': { dtype: 'q8' },
+  'Xenova/opus-mt-zh-en': { dtype: 'q8' },
+  'Xenova/opus-mt-ja-en': { dtype: 'q8' },
+  'Xenova/opus-mt-jap-en': { dtype: 'q8' },
+  'Xenova/opus-mt-en-jap': { dtype: 'q8' },
+  'Xenova/opus-mt-ko-en': { dtype: 'q8' },
+  'Xenova/opus-mt-th-en': { dtype: 'q8' }
 };
 
 const LABELS = {
