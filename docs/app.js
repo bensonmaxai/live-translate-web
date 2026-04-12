@@ -16,28 +16,11 @@ const liveTranslatedEl = $('#liveTranslated');
 const historyEl = $('#history');
 const speechSupportBadge = $('#speechSupportBadge');
 
-const FALLBACK_MULTILINGUAL_MODEL = 'Xenova/m2m100_418M';
+const FALLBACK_MULTILINGUAL_MODEL = null;
 
-const DIRECT_MODEL_MAP = {
-  'en-US->zh-TW': FALLBACK_MULTILINGUAL_MODEL,
-  'zh-TW->en-US': FALLBACK_MULTILINGUAL_MODEL,
-  'ja-JP->en-US': FALLBACK_MULTILINGUAL_MODEL,
-  'en-US->ja-JP': FALLBACK_MULTILINGUAL_MODEL,
-  'ko-KR->en-US': FALLBACK_MULTILINGUAL_MODEL,
-  'th-TH->en-US': FALLBACK_MULTILINGUAL_MODEL,
-  'ja-JP->zh-TW': FALLBACK_MULTILINGUAL_MODEL,
-  'ko-KR->zh-TW': FALLBACK_MULTILINGUAL_MODEL,
-  'th-TH->zh-TW': FALLBACK_MULTILINGUAL_MODEL
-};
+const DIRECT_MODEL_MAP = {};
 
-const MODEL_OPTIONS = {
-  'Xenova/m2m100_418M': {
-    dtype: {
-      encoder_model: 'fp32',
-      decoder_model_merged: 'fp32'
-    }
-  }
-};
+const MODEL_OPTIONS = {};
 
 const LABELS = {
   'zh-TW': '繁體中文',
@@ -125,32 +108,21 @@ async function runModel(modelId, text, src, tgt) {
 
 async function translateText(text, src, tgt) {
   if (!text.trim()) return '';
-  const plan = getTranslationPlan(src, tgt);
-  if (plan.type === 'identity') return text;
-  if (plan.type === 'direct') return await runModel(plan.models[0], text, src, tgt);
-  if (plan.type === 'pivot') {
-    const english = await runModel(plan.models[0], text, src, 'en-US');
-    return await runModel(plan.models[1], english, 'en-US', tgt);
-  }
-  throw new Error('目前這個語言方向尚未有穩定本地模型');
+  if (src === tgt) return text;
+  throw new Error('目前線上版已切換為安全模式：暫停瀏覽器端大型本地翻譯模型，避免 UI 崩潰。可先使用麥克風字幕流程或等待下一輪更穩的翻譯引擎。');
 }
 
 function renderSupport() {
   const src = getSourceLang();
   const tgt = getTargetLang();
-  const plan = getTranslationPlan(src, tgt);
   let text = `目前方向：${LABELS[src]} → ${LABELS[tgt]}｜`;
-  if (plan.type === 'identity') text += '同語字幕，不需翻譯';
-  else if (plan.type === 'direct') text += `直接本地模型：${plan.models[0]}`;
-  else if (plan.type === 'pivot') text += `英文中繼：${plan.models.join(' → ')}`;
-  else text += '目前未支援穩定本地模型';
+  if (src === tgt) text += '可作為同語字幕模式';
+  else text += '安全模式：暫停瀏覽器端大型本地翻譯模型，避免 UI 崩潰';
   supportMatrixEl.textContent = text;
 }
 
 async function preloadForCurrentPair() {
-  const plan = getTranslationPlan(getSourceLang(), getTargetLang());
-  if (plan.type === 'unsupported') throw new Error('目前這個語言方向尚未支援');
-  for (const id of plan.models) await loadTranslator(id);
+  throw new Error('安全模式：已停用瀏覽器端大型本地翻譯模型預載，避免 UI 崩潰。');
 }
 
 function getSpeechRecognitionClass() {
