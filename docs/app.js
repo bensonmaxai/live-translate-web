@@ -26,14 +26,21 @@ const DIRECT_MODEL_MAP = {
   'th-TH->en-US': 'Xenova/opus-mt-th-en'
 };
 
+const SEQ2SEQ_UINT8 = {
+  dtype: {
+    encoder_model: 'uint8',
+    decoder_model_merged: 'uint8'
+  }
+};
+
 const MODEL_OPTIONS = {
-  'Xenova/opus-mt-en-zh': { dtype: 'q8' },
-  'Xenova/opus-mt-zh-en': { dtype: 'q8' },
-  'Xenova/opus-mt-ja-en': { dtype: 'q8' },
-  'Xenova/opus-mt-jap-en': { dtype: 'q8' },
-  'Xenova/opus-mt-en-jap': { dtype: 'q8' },
-  'Xenova/opus-mt-ko-en': { dtype: 'q8' },
-  'Xenova/opus-mt-th-en': { dtype: 'q8' }
+  'Xenova/opus-mt-en-zh': SEQ2SEQ_UINT8,
+  'Xenova/opus-mt-zh-en': SEQ2SEQ_UINT8,
+  'Xenova/opus-mt-ja-en': SEQ2SEQ_UINT8,
+  'Xenova/opus-mt-jap-en': SEQ2SEQ_UINT8,
+  'Xenova/opus-mt-en-jap': SEQ2SEQ_UINT8,
+  'Xenova/opus-mt-ko-en': SEQ2SEQ_UINT8,
+  'Xenova/opus-mt-th-en': SEQ2SEQ_UINT8
 };
 
 const LABELS = {
