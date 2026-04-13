@@ -46,6 +46,26 @@
         </label>
       </div>
 
+      <div class="grid two">
+        <label>
+          語音辨識地區 / 口音
+          <select id="speechLocale">
+            <option value="zh-TW" selected>中文（台灣）</option>
+            <option value="zh-CN">中文（中國）</option>
+            <option value="zh-HK">中文（香港）</option>
+            <option value="en-US">English (US)</option>
+            <option value="en-GB">English (UK)</option>
+            <option value="th-TH">ไทย</option>
+            <option value="ja-JP">日本語</option>
+            <option value="ko-KR">한국어</option>
+          </select>
+        </label>
+        <label>
+          中文辨識建議
+          <div class="hint">若你講中文卻辨識差，先試：中文（台灣）→ 中文（中國）→ 中文（香港）依序比較。</div>
+        </label>
+      </div>
+
       <div class="buttons">
         <button id="preloadBtn" class="primary">翻譯引擎說明</button>
         <button id="startBtn" class="primary">開始麥克風</button>
@@ -55,7 +75,7 @@
 
       <div id="status" class="status">尚未開始</div>
       <div class="hint">
-        目前線上版已切換為輕量 API fallback：不再下載本地大型翻譯模型，避免 iPhone Safari UI 崩潰。先以穩定可用為主，再逐步升級翻譯品質。
+        目前線上版已切換為輕量 API fallback：不再下載本地大型翻譯模型，避免 iPhone Safari UI 崩潰。若你用中文講話辨識差，請優先調整「語音辨識地區 / 口音」而不是只改翻譯語言。
       </div>
       <div id="supportMatrix" class="support"></div>
     </section>

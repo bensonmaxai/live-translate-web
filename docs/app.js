@@ -1,6 +1,7 @@
 const $ = (s) => document.querySelector(s);
 const sourceLangEl = $('#sourceLang');
 const targetLangEl = $('#targetLang');
+const speechLocaleEl = $('#speechLocale');
 const preloadBtn = $('#preloadBtn');
 const startBtn = $('#startBtn');
 const stopBtn = $('#stopBtn');
@@ -36,7 +37,20 @@ let recognizing = false;
 function setStatus(text) { statusEl.textContent = text; }
 function getSourceLang() { return sourceLangEl.value || 'en-US'; }
 function getTargetLang() { return targetLangEl.value || 'zh-TW'; }
+function getSpeechLocale() { return speechLocaleEl.value || getSourceLang(); }
 function escapeHtml(s) { return (s || '').replace(/[&<>\"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
+
+function normalizeTranscript(text, locale) {
+  let t = (text || '').trim();
+  if (!t) return '';
+  if ((locale || '').startsWith('zh')) {
+    t = t.replace(/\s+/g, '');
+    t = t.replace(/[，。！？]{2,}/g, m => m.slice(0, 1));
+  } else {
+    t = t.replace(/\s+/g, ' ');
+  }
+  return t.trim();
+}
 
 function addHistory(src, tgt) {
   const div = document.createElement('div');
@@ -70,9 +84,21 @@ async function translateText(text, src, tgt) {
   return await myMemoryTranslate(text, src, tgt);
 }
 
-function getSpeechRecognitionClass() {
-  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+function syncSpeechLocaleFromSource() {
+  const src = getSourceLang();
+  const current = getSpeechLocale();
+  const mapping = {
+    'zh-TW': 'zh-TW',
+    'en-US': 'en-US',
+    'th-TH': 'th-TH',
+    'ja-JP': 'ja-JP',
+    'ko-KR': 'ko-KR'
+  };
+  if (!current || current === 'en-US' || current === 'zh-TW') {
+    speechLocaleEl.value = mapping[src] || src;
+  }
 }
+
 
 function setupSpeechSupport() {
   const SR = getSpeechRecognitionClass();
@@ -85,13 +111,14 @@ function setupSpeechSupport() {
 }
 
 async function handleTranscript(text) {
-  if (!text.trim()) return;
-  liveOriginalEl.textContent = text;
+  const normalized = normalizeTranscript(text, getSpeechLocale());
+  if (!normalized) return;
+  liveOriginalEl.textContent = normalized;
   setStatus('翻譯中...');
   try {
-    const translated = await translateText(text, getSourceLang(), getTargetLang());
+    const translated = await translateText(normalized, getSourceLang(), getTargetLang());
     liveTranslatedEl.textContent = translated || '(無翻譯結果)';
-    addHistory(text, translated || '(無翻譯結果)');
+    addHistory(normalized, translated || '(無翻譯結果)');
     setStatus('完成');
   } catch (e) {
     liveTranslatedEl.textContent = '(翻譯失敗)';
@@ -106,7 +133,7 @@ function startRecognition() {
     return;
   }
   recognition = new SR();
-  recognition.lang = getSourceLang();
+  recognition.lang = getSpeechLocale();
   recognition.interimResults = true;
   recognition.continuous = true;
   recognition.onstart = () => {
@@ -123,7 +150,7 @@ function startRecognition() {
       if (event.results[i].isFinal) finalText += transcript;
       else interim += transcript;
     }
-    if (interim) liveOriginalEl.textContent = interim;
+    if (interim) liveOriginalEl.textContent = normalizeTranscript(interim, getSpeechLocale());
     if (finalText) await handleTranscript(finalText.trim());
   };
   recognition.onerror = (e) => setStatus(`辨識錯誤：${e.error || 'unknown'}`);
@@ -164,7 +191,18 @@ manualTranslateBtn.addEventListener('click', async () => {
   if (!text) return setStatus('請先輸入文字');
   await handleTranscript(text);
 });
-sourceLangEl.addEventListener('change', renderSupport);
+sourceLangEl.addEventListener('change', () => {
+  const src = getSourceLang();
+  const map = {
+    'zh-TW': 'zh-TW',
+    'en-US': 'en-US',
+    'th-TH': 'th-TH',
+    'ja-JP': 'ja-JP',
+    'ko-KR': 'ko-KR'
+  };
+  speechLocaleEl.value = map[src] || src;
+  renderSupport();
+});
 targetLangEl.addEventListener('change', renderSupport);
 
 setupSpeechSupport();

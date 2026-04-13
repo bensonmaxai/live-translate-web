@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Live Translate Web V2</title>
+  <link rel="stylesheet" href="../docs/style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">V2 Architecture Preview</div>
+        <h1>Live Translate Web V2</h1>
+        <p>前端 GitHub Pages + 小型後端事件流的架構預覽。先驗證 session lifecycle 與 rolling subtitles。</p>
+      </div>
+    </header>
+
+    <section class="card controls">
+      <div class="grid two">
+        <label>來源語言
+          <select id="sourceLang">
+            <option value="zh-TW">繁體中文</option>
+            <option value="en-US" selected>English</option>
+            <option value="th-TH">ไทย</option>
+            <option value="ja-JP">日本語</option>
+            <option value="ko-KR">한국어</option>
+          </select>
+        </label>
+        <label>目標語言
+          <select id="targetLang">
+            <option value="zh-TW" selected>繁體中文</option>
+            <option value="en-US">English</option>
+            <option value="th-TH">ไทย</option>
+            <option value="ja-JP">日本語</option>
+            <option value="ko-KR">한국어</option>
+          </select>
+        </label>
+      </div>
+      <div class="grid two">
+        <label>辨識地區 / 口音
+          <select id="speechLocale">
+            <option value="zh-TW">中文（台灣）</option>
+            <option value="zh-CN">中文（中國）</option>
+            <option value="zh-HK">中文（香港）</option>
+            <option value="en-US" selected>English (US)</option>
+            <option value="th-TH">ไทย</option>
+            <option value="ja-JP">日本語</option>
+            <option value="ko-KR">한국어</option>
+          </select>
+        </label>
+        <label>Backend URL
+          <input id="backendUrl" value="http://127.0.0.1:8787" />
+        </label>
+      </div>
+      <div class="buttons">
+        <button id="startSessionBtn" class="primary">建立 V2 session</button>
+        <button id="sendMockBtn" class="primary">送測試字幕事件</button>
+        <button id="stopSessionBtn" class="danger" disabled>停止 session</button>
+        <button id="clearBtn">清除</button>
+      </div>
+      <div id="status" class="status">尚未開始</div>
+    </section>
+
+    <section class="card">
+      <h2>即時字幕</h2>
+      <div id="liveOriginal" class="live original">...</div>
+      <div id="liveTranslated" class="live translated">...</div>
+    </section>
+
+    <section class="card">
+      <h2>事件紀錄</h2>
+      <div id="history" class="history"></div>
+    </section>
+  </div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
