@@ -100,6 +100,22 @@ function syncSpeechLocaleFromSource() {
   }
 }
 
+function getSpeechRecognitionClass() {
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+}
+
+async function testMicPermission() {
+  if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+    throw new Error('此瀏覽器沒有 getUserMedia，可能不是完整 Safari 或瀏覽器限制較多');
+  }
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const tracks = stream.getAudioTracks();
+  if (!tracks.length) {
+    throw new Error('已取得權限，但沒有音訊軌道');
+  }
+  tracks.forEach(t => t.stop());
+  return true;
+}
 
 function setupSpeechSupport() {
   const SR = getSpeechRecognitionClass();
