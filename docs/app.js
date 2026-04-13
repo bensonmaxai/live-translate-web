@@ -3,6 +3,7 @@ const sourceLangEl = $('#sourceLang');
 const targetLangEl = $('#targetLang');
 const speechLocaleEl = $('#speechLocale');
 const preloadBtn = $('#preloadBtn');
+const micTestBtn = $('#micTestBtn');
 const startBtn = $('#startBtn');
 const stopBtn = $('#stopBtn');
 const clearBtn = $('#clearBtn');
@@ -102,11 +103,16 @@ function syncSpeechLocaleFromSource() {
 
 function setupSpeechSupport() {
   const SR = getSpeechRecognitionClass();
-  if (SR) {
-    speechSupportBadge.textContent = 'Speech recognition available';
+  const hasMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  if (SR && hasMedia) {
+    speechSupportBadge.textContent = 'Speech + mic APIs available';
     speechSupportBadge.classList.remove('muted');
+  } else if (SR) {
+    speechSupportBadge.textContent = 'Speech API available, mic API missing';
+  } else if (hasMedia) {
+    speechSupportBadge.textContent = 'Mic API available, Speech API missing';
   } else {
-    speechSupportBadge.textContent = 'Speech recognition unavailable on this browser';
+    speechSupportBadge.textContent = 'Speech / mic API unavailable';
   }
 }
 
@@ -129,7 +135,7 @@ async function handleTranscript(text) {
 function startRecognition() {
   const SR = getSpeechRecognitionClass();
   if (!SR) {
-    setStatus('此瀏覽器目前不支援即時語音辨識，請先用手動翻譯測試。');
+    setStatus('此瀏覽器目前不支援即時語音辨識。建議改用 Safari 開啟，或等待 V2 後端版。');
     return;
   }
   recognition = new SR();
@@ -140,7 +146,7 @@ function startRecognition() {
     recognizing = true;
     startBtn.disabled = true;
     stopBtn.disabled = false;
-    setStatus('正在聽取麥克風...');
+    setStatus(`正在聽取麥克風...（辨識口音：${getSpeechLocale()}）`);
   };
   recognition.onresult = async (event) => {
     let interim = '';
@@ -153,10 +159,15 @@ function startRecognition() {
     if (interim) liveOriginalEl.textContent = normalizeTranscript(interim, getSpeechLocale());
     if (finalText) await handleTranscript(finalText.trim());
   };
-  recognition.onerror = (e) => setStatus(`辨識錯誤：${e.error || 'unknown'}`);
+  recognition.onerror = (e) => {
+    const code = e.error || 'unknown';
+    if (code === 'not-allowed') setStatus('麥克風權限被拒絕。請到 iPhone Safari / App 權限允許麥克風。');
+    else if (code === 'audio-capture') setStatus('無法擷取音訊。請確認沒有其他 App 佔用麥克風，並先按一次「測試麥克風權限」。');
+    else setStatus(`辨識錯誤：${code}`);
+  };
   recognition.onend = () => {
     if (recognizing) {
-      try { recognition.start(); } catch {}
+      try { recognition.start(); } catch (e) { setStatus(`重新開始辨識失敗：${e.message || e}`); }
     } else {
       startBtn.disabled = false;
       stopBtn.disabled = true;
@@ -176,6 +187,16 @@ function stopRecognition() {
 preloadBtn.addEventListener('click', async () => {
   setStatus('目前線上版不需要預載本地大型模型；已改走輕量翻譯 API。');
   renderSupport();
+});
+
+micTestBtn.addEventListener('click', async () => {
+  try {
+    setStatus('正在測試麥克風權限...');
+    await testMicPermission();
+    setStatus('麥克風權限正常，可以開始辨識。');
+  } catch (e) {
+    setStatus(`麥克風測試失敗：${e.message || e}`);
+  }
 });
 
 startBtn.addEventListener('click', startRecognition);
@@ -207,4 +228,4 @@ targetLangEl.addEventListener('change', renderSupport);
 
 setupSpeechSupport();
 renderSupport();
-setStatus('已切換為 API fallback 版：先確認翻譯流程與麥克風流程穩定。');
+setStatus('已切換為 API fallback 版：請先按「測試麥克風權限」，再開始辨識。');
