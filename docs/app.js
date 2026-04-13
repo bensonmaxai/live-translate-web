@@ -1,5 +1,3 @@
-import { pipeline, env } from './vendor/transformers.min.js';
-
 const $ = (s) => document.querySelector(s);
 const sourceLangEl = $('#sourceLang');
 const targetLangEl = $('#targetLang');
@@ -16,12 +14,6 @@ const liveTranslatedEl = $('#liveTranslated');
 const historyEl = $('#history');
 const speechSupportBadge = $('#speechSupportBadge');
 
-const FALLBACK_MULTILINGUAL_MODEL = null;
-
-const DIRECT_MODEL_MAP = {};
-
-const MODEL_OPTIONS = {};
-
 const LABELS = {
   'zh-TW': '繁體中文',
   'en-US': 'English',
@@ -30,15 +22,14 @@ const LABELS = {
   'ko-KR': '한국어'
 };
 
-const M2M_LANG = {
-  'zh-TW': 'zh',
+const API_LANG = {
+  'zh-TW': 'zh-TW',
   'en-US': 'en',
   'th-TH': 'th',
   'ja-JP': 'ja',
   'ko-KR': 'ko'
 };
 
-const translatorCache = new Map();
 let recognition = null;
 let recognizing = false;
 
@@ -54,75 +45,29 @@ function addHistory(src, tgt) {
   historyEl.prepend(div);
 }
 
-function setupEnv() {
-  env.allowRemoteModels = true;
-  env.allowLocalModels = false;
-  env.backends.onnx.wasm.wasmPaths = {
-    mjs: `${location.origin}${location.pathname.replace(/\/[^/]*$/, '/') }vendor/ort-wasm-simd-threaded.mjs`,
-    wasm: `${location.origin}${location.pathname.replace(/\/[^/]*$/, '/') }vendor/ort-wasm-simd-threaded.wasm`
-  };
-  env.backends.onnx.wasm.numThreads = 1;
-  env.backends.onnx.wasm.simd = true;
-  env.backends.onnx.wasm.proxy = false;
+function renderSupport() {
+  const src = getSourceLang();
+  const tgt = getTargetLang();
+  let text = `目前方向：${LABELS[src]} → ${LABELS[tgt]}｜`;
+  if (src === tgt) text += '同語字幕模式';
+  else text += '使用輕量翻譯 API fallback（目前為 MyMemory 測試版）';
+  supportMatrixEl.textContent = text;
 }
 
-function getDirectModel(src, tgt) {
-  return DIRECT_MODEL_MAP[`${src}->${tgt}`] || null;
-}
-
-function getTranslationPlan(src, tgt) {
-  if (src === tgt) return { type: 'identity' };
-  const direct = getDirectModel(src, tgt);
-  if (direct) return { type: 'direct', models: [direct] };
-  if (src !== 'en-US' && tgt !== 'en-US') {
-    const toEn = getDirectModel(src, 'en-US') || DIRECT_MODEL_MAP[`${src}->en-US#alt`];
-    const fromEn = getDirectModel('en-US', tgt);
-    if (toEn && fromEn) return { type: 'pivot', models: [toEn, fromEn] };
-  }
-  return { type: 'unsupported', models: [] };
-}
-
-async function loadTranslator(modelId) {
-  setupEnv();
-  if (translatorCache.has(modelId)) return translatorCache.get(modelId);
-  setStatus(`載入模型中：${modelId}`);
-  const t = await pipeline('translation', modelId, {
-    ...(MODEL_OPTIONS[modelId] || {}),
-    progress_callback: x => {
-      if (x.status) setStatus(`模型 ${modelId}：${x.status}${x.file ? ' / ' + x.file : ''}`);
-    }
-  });
-  translatorCache.set(modelId, t);
-  setStatus(`模型已載入：${modelId}`);
-  return t;
-}
-
-async function runModel(modelId, text, src, tgt) {
-  const t = await loadTranslator(modelId);
-  const options = modelId === FALLBACK_MULTILINGUAL_MODEL
-    ? { src_lang: M2M_LANG[src], tgt_lang: M2M_LANG[tgt] }
-    : {};
-  const out = await t(text, options);
-  return Array.isArray(out) ? (out[0]?.translation_text || '') : '';
+async function myMemoryTranslate(text, src, tgt) {
+  const langpair = `${encodeURIComponent(API_LANG[src])}|${encodeURIComponent(API_LANG[tgt])}`;
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langpair}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`翻譯 API 失敗 (${res.status})`);
+  const data = await res.json();
+  if (data.responseStatus !== 200) throw new Error(data.responseDetails || '翻譯 API 無法使用');
+  return data.responseData?.translatedText || '';
 }
 
 async function translateText(text, src, tgt) {
   if (!text.trim()) return '';
   if (src === tgt) return text;
-  throw new Error('目前線上版已切換為安全模式：暫停瀏覽器端大型本地翻譯模型，避免 UI 崩潰。可先使用麥克風字幕流程或等待下一輪更穩的翻譯引擎。');
-}
-
-function renderSupport() {
-  const src = getSourceLang();
-  const tgt = getTargetLang();
-  let text = `目前方向：${LABELS[src]} → ${LABELS[tgt]}｜`;
-  if (src === tgt) text += '可作為同語字幕模式';
-  else text += '安全模式：暫停瀏覽器端大型本地翻譯模型，避免 UI 崩潰';
-  supportMatrixEl.textContent = text;
-}
-
-async function preloadForCurrentPair() {
-  throw new Error('安全模式：已停用瀏覽器端大型本地翻譯模型預載，避免 UI 崩潰。');
+  return await myMemoryTranslate(text, src, tgt);
 }
 
 function getSpeechRecognitionClass() {
@@ -202,10 +147,8 @@ function stopRecognition() {
 }
 
 preloadBtn.addEventListener('click', async () => {
-  preloadBtn.disabled = true;
-  try { await preloadForCurrentPair(); }
-  catch (e) { setStatus(`模型載入失敗：${e.message || e}`); }
-  finally { preloadBtn.disabled = false; renderSupport(); }
+  setStatus('目前線上版不需要預載本地大型模型；已改走輕量翻譯 API。');
+  renderSupport();
 });
 
 startBtn.addEventListener('click', startRecognition);
@@ -226,4 +169,4 @@ targetLangEl.addEventListener('change', renderSupport);
 
 setupSpeechSupport();
 renderSupport();
-setStatus('可先預載模型，或先用手動文字測試翻譯鏈路');
+setStatus('已切換為 API fallback 版：先確認翻譯流程與麥克風流程穩定。');
